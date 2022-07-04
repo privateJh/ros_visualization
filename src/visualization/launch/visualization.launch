@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="visualization" type="visualization" name="visualization"/>
+    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find visualization)/resources/hmi.rviz" />
+</launch>
