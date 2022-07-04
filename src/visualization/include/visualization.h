@@ -57,6 +57,9 @@ class Visualizatoin{
         // Variables
         bool isEgoVehicleUpdate = false;
         bool isTargetVehicleUpdate = false;
+        double ego2lidar_x;
+        double ego2lidar_y;
+        double ego2lidar_z;
         // tf
         // tf::Quaternion world2ego_q_;
         tf::Transform world2ego_transform_;

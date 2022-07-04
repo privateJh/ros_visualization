@@ -14,6 +14,11 @@ Visualizatoin::Visualizatoin(){
   sub_egoVehicle = nh_.subscribe("/ego_vehicle",10,&Visualizatoin::get_egoVehicle,this);
   sub_targetVehicle = nh_.subscribe("/target_vehicle",10,&Visualizatoin::get_targetVehicle,this);
 
+
+  nh_.param("visualization/ego2lidar_x", ego2lidar_x, -0.5);
+  nh_.param("visualization/ego2lidar_y", ego2lidar_y, 0.0);
+  nh_.param("visualization/ego2lidar_z", ego2lidar_z, 2.0);
+
   ego_vehicle_odom_.header.frame_id = "/world";
   target_vehicle_odom_.header.frame_id = "/world";
   // Init State
@@ -27,7 +32,7 @@ Visualizatoin::Visualizatoin(){
   world2target_transform_.setOrigin(tf::Vector3(5.0,2.0, 0.0));
   world2target_transform_.setRotation(q);
   
-  ego2lidar_transform_.setOrigin(tf::Vector3(0.0,0.7, 1.8));
+  ego2lidar_transform_.setOrigin(tf::Vector3(ego2lidar_x,ego2lidar_y, ego2lidar_z));
   ego2lidar_transform_.setRotation(q);
 
 }
@@ -101,7 +106,7 @@ void Visualizatoin::makeEgoVehicleModelMarker(){
         "package://visualization/resources/SimpleCar.dae";
     vehicle_model_marker_.mesh_use_embedded_materials = true;
     tf::Quaternion q;
-    q.setRPY(0,0,0);
+    q.setRPY(0,0,M_PI/2);
     q.normalize();
     // vehicle_model_marker_.pose.position.x = ego_vehicle_.position.x;
     // vehicle_model_marker_.pose.position.y = ego_vehicle_.position.y;
@@ -111,8 +116,8 @@ void Visualizatoin::makeEgoVehicleModelMarker(){
     // vehicle_model_marker_.pose.orientation.z = ego_vehicle_.orientation.z;
     // vehicle_model_marker_.pose.orientation.w = ego_vehicle_.orientation.w;
 
-    vehicle_model_marker_.pose.position.x = 0.0;
-    vehicle_model_marker_.pose.position.y = 0.7;
+    vehicle_model_marker_.pose.position.x = -0.5;
+    vehicle_model_marker_.pose.position.y = 0.0;
     vehicle_model_marker_.pose.position.z = 0.0;
     vehicle_model_marker_.pose.orientation.x = q[0];
     vehicle_model_marker_.pose.orientation.y = q[1];
@@ -173,7 +178,7 @@ void Visualizatoin::makeTargetVehicleModelMarker(){
         "package://visualization/resources/evoque_new.dae";
     target_vehicle_model_marker_.mesh_use_embedded_materials = true;
     tf::Quaternion q;
-    q.setRPY(0,0,0);
+    q.setRPY(0,0,M_PI/2);
     q.normalize();
     // target_vehicle_model_marker_.pose.position.x = target_vehicle_.position.x;
     // target_vehicle_model_marker_.pose.position.y = target_vehicle_.position.y;
@@ -183,9 +188,9 @@ void Visualizatoin::makeTargetVehicleModelMarker(){
     // target_vehicle_model_marker_.pose.orientation.z = target_vehicle_.orientation.z;
     // target_vehicle_model_marker_.pose.orientation.w = target_vehicle_.orientation.w;
     
-    target_vehicle_model_marker_.pose.position.x = 0.0;
+    target_vehicle_model_marker_.pose.position.x = 3.0;
     // target_vehicle_model_marker_.pose.position.y = 0.0;
-    target_vehicle_model_marker_.pose.position.y = -2.1;
+    target_vehicle_model_marker_.pose.position.y = 0.0;
     target_vehicle_model_marker_.pose.position.z = 0.0;
     target_vehicle_model_marker_.pose.orientation.x = q[0];
     target_vehicle_model_marker_.pose.orientation.y = q[1];
@@ -235,15 +240,15 @@ void Visualizatoin::makeTargetVehicleModelMarker(){
     q_.setRPY(0, 0, 0);
     q_.normalize();
     target_bounding_box_.header.frame_id = "/target";
-    target_bounding_box_.pose.position.x = 0.0;
-    target_bounding_box_.pose.position.y = -1.7;
+    target_bounding_box_.pose.position.x = 1.7;
+    target_bounding_box_.pose.position.y = 0.0;
     target_bounding_box_.pose.position.z = 1.0;
     target_bounding_box_.pose.orientation.x = q_[0];
     target_bounding_box_.pose.orientation.y = q_[1];
     target_bounding_box_.pose.orientation.z = q_[2];
     target_bounding_box_.pose.orientation.w = q_[3];
-    target_bounding_box_.dimensions.x = 2.0;
-    target_bounding_box_.dimensions.y = 5.0;
+    target_bounding_box_.dimensions.x = 5.0;
+    target_bounding_box_.dimensions.y = 2.0;
     target_bounding_box_.dimensions.z = 2.0;
     
 
