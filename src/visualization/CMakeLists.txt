@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   # kkanbu_msgs
   nav_msgs
   visualization_msgs
-  vision_msgs
+  # vision_msgs
   jsk_recognition_msgs
   sensor_msgs
 )

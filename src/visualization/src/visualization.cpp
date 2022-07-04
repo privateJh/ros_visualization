@@ -27,7 +27,7 @@ Visualizatoin::Visualizatoin(){
   world2target_transform_.setOrigin(tf::Vector3(5.0,2.0, 0.0));
   world2target_transform_.setRotation(q);
   
-  ego2lidar_transform_.setOrigin(tf::Vector3(0.0,0.5, 2.0));
+  ego2lidar_transform_.setOrigin(tf::Vector3(0.0,0.7, 1.8));
   ego2lidar_transform_.setRotation(q);
 
 }
@@ -210,7 +210,7 @@ void Visualizatoin::makeTargetVehicleModelMarker(){
     target_vehicle_string_marker_.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
 
     // target_vehicle_string_marker_.pose.position.x = target_vehicle_.position.x;
-    // target_vehicle_string_marker_.pose.position.y = target_vehicle_.position.y;
+    // target_vehicle_string_marker_.pose.posit0ion.y = target_vehicle_.position.y;
     // target_vehicle_string_marker_.pose.position.z = target_vehicle_.position.z + 1.0;
 
     target_vehicle_string_marker_.pose.position.x = 0.0;
@@ -236,7 +236,7 @@ void Visualizatoin::makeTargetVehicleModelMarker(){
     q_.normalize();
     target_bounding_box_.header.frame_id = "/target";
     target_bounding_box_.pose.position.x = 0.0;
-    target_bounding_box_.pose.position.y = -1.0;
+    target_bounding_box_.pose.position.y = -1.7;
     target_bounding_box_.pose.position.z = 1.0;
     target_bounding_box_.pose.orientation.x = q_[0];
     target_bounding_box_.pose.orientation.y = q_[1];
