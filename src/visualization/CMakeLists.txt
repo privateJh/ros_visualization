@@ -11,10 +11,10 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   tf
-  # kkanbu_msgs
   nav_msgs
   visualization_msgs
-  # vision_msgs
+  ref_msgs
+#   vision_msgs
   jsk_recognition_msgs
   sensor_msgs
 )
@@ -63,6 +63,12 @@ add_executable(${PROJECT_NAME}
 #     ${catkin_EXPORTED_TARGETS}
 #     kkanbu_msgs_generate_messages_cpp
 # )
+
+add_dependencies(${PROJECT_NAME} 
+    ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+    ${catkin_EXPORTED_TARGETS}
+    ref_msgs_generate_messages_cpp
+)
 
 target_link_libraries(${PROJECT_NAME}
     ${catkin_LIBRARIES}

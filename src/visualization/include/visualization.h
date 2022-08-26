@@ -15,6 +15,10 @@
 #include "sensor_msgs/Image.h"
 #include "geometry_msgs/Pose.h"
 #include "jsk_recognition_msgs/BoundingBox.h"
+#include "jsk_recognition_msgs/BoundingBoxArray.h"
+
+#include "ref_msgs/GlobalGT.h"
+#include "ref_msgs/TrackObject.h"
 // #include "vision_msgs/BoundingBox3D.h"
 // #include "vision_msgs/create_aabb.h"
 
@@ -27,55 +31,82 @@ class Visualizatoin{
 
         tf::TransformBroadcaster broadcast_TF;
 
-        ros::Publisher pub_vehicleModelMarker;
-        ros::Publisher pub_targetVehicleModelMarker;
+        ros::Publisher pub_gv80_marker;
+        ros::Publisher pub_kusv_marker;
+        ros::Publisher pub_starex_marker;
+        ros::Publisher pub_rent_marker;
 
-        ros::Publisher pub_targetBoundingBox;
+        ros::Publisher pub_boundingboxes;
 
-        ros::Publisher pub_vehicleStringMarker;
-        ros::Publisher pub_targetVehicleStringMarker;
+        ros::Publisher pub_gv80_string_marker;
+        ros::Publisher pub_kusv_string_marker;
+        ros::Publisher pub_starex_string_marker;
+        ros::Publisher pub_rent_string_marker;
 
         ros::Publisher pub_egoOdom;
         ros::Publisher pub_targetOdom;
                 
-        ros::Subscriber sub_egoVehicle;
-        ros::Subscriber sub_targetVehicle;
+        ros::Subscriber sub_gv80;
+        ros::Subscriber sub_kusv;
+        ros::Subscriber sub_starex;
+        ros::Subscriber sub_rent;
+        ros::Subscriber sub_track_info;
         
         // Input
-        geometry_msgs::Pose ego_vehicle_;
-        geometry_msgs::Pose target_vehicle_;
+        geometry_msgs::Pose gv80;
+        geometry_msgs::Pose kusv;
+        geometry_msgs::Pose starex;
+        geometry_msgs::Pose rent;
+        ref_msgs::GlobalGT track_info;
 
         // Output
-        visualization_msgs::Marker vehicle_model_marker_;
-        visualization_msgs::Marker target_vehicle_model_marker_;
-        visualization_msgs::Marker vehicle_string_marker_;
-        visualization_msgs::Marker target_vehicle_string_marker_;
-        jsk_recognition_msgs::BoundingBox target_bounding_box_ ;
+        visualization_msgs::Marker gv80_marker_;
+        visualization_msgs::Marker gv80_string_marker_;
+
+        visualization_msgs::Marker kusv_marker_;
+        visualization_msgs::Marker kusv_string_marker_;
+        
+        visualization_msgs::Marker starex_marker_;
+        visualization_msgs::Marker starex_string_marker_;
+        
+        visualization_msgs::Marker rent_marker_;
+        visualization_msgs::Marker rent_string_marker_;
+        
+        jsk_recognition_msgs::BoundingBoxArray bounding_boxes_ ;
+        
         nav_msgs::Odometry ego_vehicle_odom_;
         nav_msgs::Odometry target_vehicle_odom_;
 
         // Variables
-        bool isEgoVehicleUpdate = false;
-        bool isTargetVehicleUpdate = false;
-        double ego2lidar_x;
-        double ego2lidar_y;
-        double ego2lidar_z;
+        bool isGv80Update = false;
+        bool isKusvUpdate = false;
+        bool isStarexUpdate = false;
+        bool isRentUpdate = false;
+        bool isTrackInfoUpdate = false;
         // tf
         // tf::Quaternion world2ego_q_;
-        tf::Transform world2ego_transform_;
-        tf::Transform world2target_transform_;
-        tf::Transform ego2lidar_transform_;
+        tf::Transform world2gv80_transform_;
+        tf::Transform world2kusv_transform_;
+        tf::Transform world2starex_transform_;
+        tf::Transform world2rent_transform_;
 
     public:
         Visualizatoin();
         ~Visualizatoin();
     public:
         // Callback
-        void get_egoVehicle(const geometry_msgs::Pose::ConstPtr& msg);
-        void get_targetVehicle(const geometry_msgs::Pose::ConstPtr& msg);
+        void get_gv80(const geometry_msgs::Pose::ConstPtr& msg);
+        void get_kusv(const geometry_msgs::Pose::ConstPtr& msg);
+        void get_starex(const geometry_msgs::Pose::ConstPtr& msg);
+        void get_rent(const geometry_msgs::Pose::ConstPtr& msg);
+        void get_track_info(const ref_msgs::GlobalGT::ConstPtr& msg);
+        
         // Make Dae File
-        void makeEgoVehicleModelMarker();
-        void makeTargetVehicleModelMarker();
+        void makeGv80Marker();
+        void makeKusvMarker();
+        void makeStarexMarker();
+        void makeRentMarker();
+        void makeBoundingBoxesMarker();
         // Publish
         void publishAllMarker();
         // tf
@@ -83,8 +114,10 @@ class Visualizatoin{
 
         //tf
         void broadcasting_tf();
-        void Update_Ego_TF();
-        void Update_Target_TF();
+        void Update_Gv80_TF();
+        void Update_Kusv_TF();
+        void Update_Starex_TF();
+        void Update_Rent_TF();
 
 
 };

@@ -2,22 +2,26 @@
 
 Visualizatoin::Visualizatoin(){
   
-  pub_vehicleModelMarker = nh_.advertise<visualization_msgs::Marker>("/hmi/ego_model",100);
-  pub_targetVehicleModelMarker = nh_.advertise<visualization_msgs::Marker>("/hmi/target_model",100);
-  pub_vehicleStringMarker = nh_.advertise<visualization_msgs::Marker>("/hmi/ego_model_name",100);
-  pub_targetVehicleStringMarker = nh_.advertise<visualization_msgs::Marker>("/hmi/target_model_name",100);  
-  pub_targetBoundingBox = nh_.advertise<jsk_recognition_msgs::BoundingBox>("/hmi/target_bounding_box",100);
+  pub_gv80_marker = nh_.advertise<visualization_msgs::Marker>("/hmi/gv80",100);
+  pub_kusv_marker = nh_.advertise<visualization_msgs::Marker>("/hmi/kusv",100);
+  pub_starex_marker = nh_.advertise<visualization_msgs::Marker>("/hmi/starex",100);
+  pub_rent_marker = nh_.advertise<visualization_msgs::Marker>("/hmi/rent",100);
+  
+  pub_gv80_string_marker = nh_.advertise<visualization_msgs::Marker>("/hmi/gv80_name",100);
+  pub_kusv_string_marker = nh_.advertise<visualization_msgs::Marker>("/hmi/kusv_name",100);
+  pub_starex_string_marker = nh_.advertise<visualization_msgs::Marker>("/hmi/starex_name",100);
+  pub_rent_string_marker = nh_.advertise<visualization_msgs::Marker>("/hmi/rent_name",100);
+  
+  pub_boundingboxes = nh_.advertise<jsk_recognition_msgs::BoundingBoxArray>("/hmi/bounding_boxes",100);
 
   pub_egoOdom = nh_.advertise<nav_msgs::Odometry>("/hmi/ego_odom",100);  
   pub_targetOdom = nh_.advertise<nav_msgs::Odometry>("/hmi/target_odom",100);  
 
-  sub_egoVehicle = nh_.subscribe("/ego_vehicle",10,&Visualizatoin::get_egoVehicle,this);
-  sub_targetVehicle = nh_.subscribe("/target_vehicle",10,&Visualizatoin::get_targetVehicle,this);
-
-
-  nh_.param("visualization/ego2lidar_x", ego2lidar_x, -0.5);
-  nh_.param("visualization/ego2lidar_y", ego2lidar_y, 0.0);
-  nh_.param("visualization/ego2lidar_z", ego2lidar_z, 2.0);
+  sub_gv80 = nh_.subscribe("/gv80",10,&Visualizatoin::get_gv80,this);
+  sub_kusv = nh_.subscribe("/kusv",10,&Visualizatoin::get_kusv,this);
+  sub_starex = nh_.subscribe("/starex",10,&Visualizatoin::get_starex,this);
+  sub_rent = nh_.subscribe("/rent",10,&Visualizatoin::get_rent,this);
+  sub_track_info = nh_.subscribe("/track_info", 100, &Visualizatoin::get_track_info, this);
 
   ego_vehicle_odom_.header.frame_id = "/world";
   target_vehicle_odom_.header.frame_id = "/world";
@@ -26,240 +30,439 @@ Visualizatoin::Visualizatoin(){
   q.setRPY(0, 0, 0);
   q.normalize();
   
-  world2ego_transform_.setOrigin(tf::Vector3(0.0,0.0, 0.0));
-  world2ego_transform_.setRotation(q);
+  world2gv80_transform_.setOrigin(tf::Vector3(0.0,0.0, 0.0));
+  world2gv80_transform_.setRotation(q);
 
-  world2target_transform_.setOrigin(tf::Vector3(5.0,2.0, 0.0));
-  world2target_transform_.setRotation(q);
-  
-  ego2lidar_transform_.setOrigin(tf::Vector3(ego2lidar_x,ego2lidar_y, ego2lidar_z));
-  ego2lidar_transform_.setRotation(q);
+  world2kusv_transform_.setOrigin(tf::Vector3(3.0,0.0, 0.0));
+  world2kusv_transform_.setRotation(q);
+
+  world2starex_transform_.setOrigin(tf::Vector3(6.0,0.0, 0.0));
+  world2starex_transform_.setRotation(q);
+
+  world2rent_transform_.setOrigin(tf::Vector3(9.0,0.0, 0.0));
+  world2rent_transform_.setRotation(q);
 
 }
 Visualizatoin::~Visualizatoin() {}
 
-void Visualizatoin::get_egoVehicle(const geometry_msgs::Pose::ConstPtr& msg){
-  ego_vehicle_ = *msg;
-  isEgoVehicleUpdate = true;
+void Visualizatoin::get_gv80(const geometry_msgs::Pose::ConstPtr& msg){
+  gv80 = *msg;
+  isGv80Update = true;
 }
 
-void Visualizatoin::get_targetVehicle(const geometry_msgs::Pose::ConstPtr& msg){
-  target_vehicle_ = *msg;
-  isTargetVehicleUpdate = true;
+void Visualizatoin::get_kusv(const geometry_msgs::Pose::ConstPtr& msg){
+  kusv = *msg;
+  isKusvUpdate = true;
 }
 
-void Visualizatoin::Update_Ego_TF(){
-  if(isEgoVehicleUpdate){
+void Visualizatoin::get_starex(const geometry_msgs::Pose::ConstPtr& msg){
+  starex = *msg;
+  isStarexUpdate = true;
+}
+
+void Visualizatoin::get_rent(const geometry_msgs::Pose::ConstPtr& msg){
+  rent = *msg;
+  isRentUpdate = true;
+}
+
+void Visualizatoin::get_track_info(const ref_msgs::GlobalGT::ConstPtr& msg){
+  track_info = *msg;
+  isTrackInfoUpdate = true;
+}
+
+void Visualizatoin::Update_Gv80_TF(){
+  if(isGv80Update){
     tf::Quaternion q;
-    q[0] = ego_vehicle_.orientation.x;
-    q[1] = ego_vehicle_.orientation.y;
-    q[2] = ego_vehicle_.orientation.z;
-    q[3] = ego_vehicle_.orientation.w;
-    world2ego_transform_.setOrigin(tf::Vector3(ego_vehicle_.position.x,ego_vehicle_.position.y, 0.0));
-    world2ego_transform_.setRotation(q);
+    q[0] = gv80.orientation.x;
+    q[1] = gv80.orientation.y;
+    q[2] = gv80.orientation.z;
+    q[3] = gv80.orientation.w;
+    world2gv80_transform_.setOrigin(tf::Vector3(gv80.position.x,gv80.position.y, 0.0));
+    world2gv80_transform_.setRotation(q);
     ego_vehicle_odom_.header.stamp = ros::Time::now();
     
   }else{
-    ROS_WARN("Ego Vehicle State Not Updated!");
+    ROS_WARN("GV80 State Not Updated!");
   }
 }
 
-void Visualizatoin::Update_Target_TF(){
-  if(isTargetVehicleUpdate){
+void Visualizatoin::Update_Kusv_TF(){
+  if(isKusvUpdate){
     tf::Quaternion q;
-    q[0] = target_vehicle_.orientation.x;
-    q[1] = target_vehicle_.orientation.y;
-    q[2] = target_vehicle_.orientation.z;
-    q[3] = target_vehicle_.orientation.w;
-    world2target_transform_.setOrigin(tf::Vector3(target_vehicle_.position.x,target_vehicle_.position.y, 0.0));
-    world2target_transform_.setRotation(q);
+    q[0] = kusv.orientation.x;
+    q[1] = kusv.orientation.y;
+    q[2] = kusv.orientation.z;
+    q[3] = kusv.orientation.w;
+    world2kusv_transform_.setOrigin(tf::Vector3(kusv.position.x,kusv.position.y, 0.0));
+    world2kusv_transform_.setRotation(q);
   }else{
-    ROS_ERROR("Target Vehicle State Not Updated!");
+    ROS_WARN("KUSV State Not Updated!");
+  }
+}
+
+void Visualizatoin::Update_Starex_TF(){
+  if(isStarexUpdate){
+    tf::Quaternion q;
+    q[0] = starex.orientation.x;
+    q[1] = starex.orientation.y;
+    q[2] = starex.orientation.z;
+    q[3] = starex.orientation.w;
+    world2starex_transform_.setOrigin(tf::Vector3(starex.position.x,starex.position.y, 0.0));
+    world2starex_transform_.setRotation(q);
+  }else{
+    ROS_WARN("STAREX State Not Updated!");
+  }
+}
+
+void Visualizatoin::Update_Rent_TF(){
+  if(isRentUpdate){
+    tf::Quaternion q;
+    q[0] = rent.orientation.x;
+    q[1] = rent.orientation.y;
+    q[2] = rent.orientation.z;
+    q[3] = rent.orientation.w;
+    world2rent_transform_.setOrigin(tf::Vector3(rent.position.x,rent.position.y, 0.0));
+    world2rent_transform_.setRotation(q);
+  }else{
+    ROS_WARN("RENT State Not Updated!");
   }
 }
 
 void Visualizatoin::broadcasting_tf() {
     
-    Update_Ego_TF();
+    Update_Gv80_TF();
 
     broadcast_TF.sendTransform(tf::StampedTransform(
-        world2ego_transform_, ros::Time::now(), "/world", "/ego"));
+        world2gv80_transform_, ros::Time::now(), "/world", "/gv80"));
 
-    Update_Target_TF();
-
-    broadcast_TF.sendTransform(tf::StampedTransform(
-        world2target_transform_, ros::Time::now(), "/world", "/target"));
+    Update_Kusv_TF();
 
     broadcast_TF.sendTransform(tf::StampedTransform(
-        ego2lidar_transform_, ros::Time::now(), "/ego", "/lidar"));
+        world2kusv_transform_, ros::Time::now(), "/world", "/kusv"));
+
+    Update_Starex_TF();
+
+    broadcast_TF.sendTransform(tf::StampedTransform(
+        world2starex_transform_, ros::Time::now(), "/world", "/starex"));
+    
+    Update_Rent_TF();
+
+    broadcast_TF.sendTransform(tf::StampedTransform(
+        world2rent_transform_, ros::Time::now(), "/world", "/rent"));
 }
 
-void Visualizatoin::makeEgoVehicleModelMarker(){
+void Visualizatoin::makeGv80Marker(){
     // Update_Ego_TF();
-    vehicle_model_marker_.header.frame_id = "/ego";
-    vehicle_model_marker_.header.stamp = ros::Time::now();
-    // vehicle_model_marker_.ns = "--KKANBU--";
-    vehicle_model_marker_.id = 0;
+    gv80_marker_.header.frame_id = "/gv80";
+    gv80_marker_.header.stamp = ros::Time::now();
+    gv80_marker_.id = 0;
     // Set the marker type
-    vehicle_model_marker_.type = visualization_msgs::Marker::MESH_RESOURCE;
-    vehicle_model_marker_.mesh_resource =
+    gv80_marker_.type = visualization_msgs::Marker::MESH_RESOURCE;
+    gv80_marker_.mesh_resource =
         "package://visualization/resources/SimpleCar.dae";
-    vehicle_model_marker_.mesh_use_embedded_materials = true;
+    gv80_marker_.mesh_use_embedded_materials = true;
     tf::Quaternion q;
-    q.setRPY(0,0,M_PI/2);
-    q.normalize();
-    // vehicle_model_marker_.pose.position.x = ego_vehicle_.position.x;
-    // vehicle_model_marker_.pose.position.y = ego_vehicle_.position.y;
-    // vehicle_model_marker_.pose.position.z = ego_vehicle_.position.z;
-    // vehicle_model_marker_.pose.orientation.x = ego_vehicle_.orientation.x;
-    // vehicle_model_marker_.pose.orientation.y = ego_vehicle_.orientation.y;
-    // vehicle_model_marker_.pose.orientation.z = ego_vehicle_.orientation.z;
-    // vehicle_model_marker_.pose.orientation.w = ego_vehicle_.orientation.w;
+    q.setRPY(0,0,0);
 
-    vehicle_model_marker_.pose.position.x = -0.5;
-    vehicle_model_marker_.pose.position.y = 0.0;
-    vehicle_model_marker_.pose.position.z = 0.0;
-    vehicle_model_marker_.pose.orientation.x = q[0];
-    vehicle_model_marker_.pose.orientation.y = q[1];
-    vehicle_model_marker_.pose.orientation.z = q[2];
-    vehicle_model_marker_.pose.orientation.w = q[3];
+    // gv80_marker_.pose.position.x = ego_vehicle_.position.x;
+    // gv80_marker_.pose.position.y = ego_vehicle_.position.y;
+    // gv80_marker_.pose.position.z = ego_vehicle_.position.z;
+    // gv80_marker_.pose.orientation.x = ego_vehicle_.orientation.x;
+    // gv80_marker_.pose.orientation.y = ego_vehicle_.orientation.y;
+    // gv80_marker_.pose.orientation.z = ego_vehicle_.orientation.z;
+    // gv80_marker_.pose.orientation.w = ego_vehicle_.orientation.w;
+
+    gv80_marker_.pose.position.x = 0.0;
+    gv80_marker_.pose.position.y = 0.0;
+    gv80_marker_.pose.position.z = 0.0;
+    gv80_marker_.pose.orientation.x = q[0];
+    gv80_marker_.pose.orientation.y = q[1];
+    gv80_marker_.pose.orientation.z = q[2];
+    gv80_marker_.pose.orientation.w = q[3];
     
     // Set the scale of the marker
-    vehicle_model_marker_.scale.x = 1.0;
-    vehicle_model_marker_.scale.y = 1.0;
-    vehicle_model_marker_.scale.z = 1.0;
+    gv80_marker_.scale.x = 1.0;
+    gv80_marker_.scale.y = 1.0;
+    gv80_marker_.scale.z = 1.0;
     // Color Pink
-    vehicle_model_marker_.color.r = 1.0;
-    vehicle_model_marker_.color.g = 0.3;
-    vehicle_model_marker_.color.b = 0.5;
-    vehicle_model_marker_.color.a = 1.0;
+    gv80_marker_.color.r = 0.5882;
+    gv80_marker_.color.g = 0.2941;
+    gv80_marker_.color.b = 0.0;
+    gv80_marker_.color.a = 1.0;
 
-    vehicle_model_marker_.lifetime = ros::Duration(0.1);
+    gv80_marker_.lifetime = ros::Duration(0.1);
 
-    vehicle_string_marker_.header.frame_id = "/ego";
-    vehicle_string_marker_.header.stamp = ros::Time::now();
-    vehicle_string_marker_.id = 2;
-    vehicle_string_marker_.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    gv80_string_marker_.header.frame_id = "/gv80";
+    gv80_string_marker_.header.stamp = ros::Time::now();
+    gv80_string_marker_.id = 1;
+    gv80_string_marker_.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
 
-    // vehicle_string_marker_.pose.position.x = ego_vehicle_.position.x;
-    // vehicle_string_marker_.pose.position.y = ego_vehicle_.position.y;
-    // vehicle_string_marker_.pose.position.z = ego_vehicle_.position.z + 1.0;
+    // gv80_string_marker_.pose.position.x = gv80.position.x;
+    // gv80_string_marker_.pose.position.y = gv80.position.y;
+    // gv80_string_marker_.pose.position.z = gv80.position.z + 1.0;
 
-    vehicle_string_marker_.pose.position.x = 0.0;
-    vehicle_string_marker_.pose.position.y = 0.0;
-    vehicle_string_marker_.pose.position.z = 2.0;
+    gv80_string_marker_.pose.position.x = 0.0;
+    gv80_string_marker_.pose.position.y = 0.0;
+    gv80_string_marker_.pose.position.z = 2.0;
 
     // Set the scale of the marker
-    vehicle_string_marker_.scale.x = 0.2;
-    vehicle_string_marker_.scale.y = 0.2;
-    vehicle_string_marker_.scale.z = 0.2;
+    gv80_string_marker_.scale.x = 0.2;
+    gv80_string_marker_.scale.y = 0.2;
+    gv80_string_marker_.scale.z = 0.2;
     // Color Pink
-    vehicle_string_marker_.color.r = 1.0;
-    vehicle_string_marker_.color.g = 1.0;
-    vehicle_string_marker_.color.b = 1.0;
-    vehicle_string_marker_.color.a = 1.0;
-    vehicle_string_marker_.lifetime = ros::Duration(0.1);
+    gv80_string_marker_.color.r = 1.0;
+    gv80_string_marker_.color.g = 1.0;
+    gv80_string_marker_.color.b = 1.0;
+    gv80_string_marker_.color.a = 1.0;
+    gv80_string_marker_.lifetime = ros::Duration(0.1);
 
-    vehicle_string_marker_.text = "Ego";
+    gv80_string_marker_.text = "GV80";
 
 }
 
-void Visualizatoin::makeTargetVehicleModelMarker(){
-    
-    target_vehicle_model_marker_.header.frame_id = "/target";
-    target_vehicle_model_marker_.header.stamp = ros::Time::now();
-    // target_vehicle_model_marker_.ns = "--KKANBU--";
-    target_vehicle_model_marker_.id = 1;
+void Visualizatoin::makeKusvMarker(){
+    // Update_Ego_TF();
+    kusv_marker_.header.frame_id = "/kusv";
+    kusv_marker_.header.stamp = ros::Time::now();
+    kusv_marker_.id = 2;
     // Set the marker type
-    // target_vehicle_model_marker_.type = visualization_msgs::Marker::CUBE;
-    
-    target_vehicle_model_marker_.type = visualization_msgs::Marker::MESH_RESOURCE;
-    target_vehicle_model_marker_.mesh_resource =
-        "package://visualization/resources/evoque_new.dae";
-    target_vehicle_model_marker_.mesh_use_embedded_materials = true;
+    kusv_marker_.type = visualization_msgs::Marker::MESH_RESOURCE;
+    kusv_marker_.mesh_resource =
+        "package://visualization/resources/SimpleCar.dae";
+    kusv_marker_.mesh_use_embedded_materials = true;
     tf::Quaternion q;
-    q.setRPY(0,0,M_PI/2);
-    q.normalize();
-    // target_vehicle_model_marker_.pose.position.x = target_vehicle_.position.x;
-    // target_vehicle_model_marker_.pose.position.y = target_vehicle_.position.y;
-    // target_vehicle_model_marker_.pose.position.z = target_vehicle_.position.z;
-    // target_vehicle_model_marker_.pose.orientation.x = target_vehicle_.orientation.x;
-    // target_vehicle_model_marker_.pose.orientation.y = target_vehicle_.orientation.y;
-    // target_vehicle_model_marker_.pose.orientation.z = target_vehicle_.orientation.z;
-    // target_vehicle_model_marker_.pose.orientation.w = target_vehicle_.orientation.w;
+    q.setRPY(0,0,0);
+
+    // kusv_marker_.pose.position.x = kusv.position.x;
+    // kusv_marker_.pose.position.y = kusv.position.y;
+    // kusv_marker_.pose.position.z = kusv.position.z;
+    // kusv_marker_.pose.orientation.x = kusv.orientation.x;
+    // kusv_marker_.pose.orientation.y = kusv.orientation.y;
+    // kusv_marker_.pose.orientation.z = kusv.orientation.z;
+    // kusv_marker_.pose.orientation.w = kusv.orientation.w;
+
+    kusv_marker_.pose.position.x = 0.0;
+    kusv_marker_.pose.position.y = 0.0;
+    kusv_marker_.pose.position.z = 0.0;
+    kusv_marker_.pose.orientation.x = q[0];
+    kusv_marker_.pose.orientation.y = q[1];
+    kusv_marker_.pose.orientation.z = q[2];
+    kusv_marker_.pose.orientation.w = q[3];
     
-    target_vehicle_model_marker_.pose.position.x = 3.0;
-    // target_vehicle_model_marker_.pose.position.y = 0.0;
-    target_vehicle_model_marker_.pose.position.y = 0.0;
-    target_vehicle_model_marker_.pose.position.z = 0.0;
-    target_vehicle_model_marker_.pose.orientation.x = q[0];
-    target_vehicle_model_marker_.pose.orientation.y = q[1];
-    target_vehicle_model_marker_.pose.orientation.z = q[2];
-    target_vehicle_model_marker_.pose.orientation.w = q[3];
+    // Set the scale of the marker
+    kusv_marker_.scale.x = 1.0;
+    kusv_marker_.scale.y = 1.0;
+    kusv_marker_.scale.z = 1.0;
+    // Color Pink
+    kusv_marker_.color.r = 0.52;
+    kusv_marker_.color.g = 0.52;
+    kusv_marker_.color.b = 0.52;
+    kusv_marker_.color.a = 1.0;
+
+    kusv_marker_.lifetime = ros::Duration(0.1);
+
+    kusv_string_marker_.header.frame_id = "/kusv";
+    kusv_string_marker_.header.stamp = ros::Time::now();
+    kusv_string_marker_.id = 3;
+    kusv_string_marker_.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+
+    // kusv_string_marker_.pose.position.x = kusv.position.x;
+    // kusv_string_marker_.pose.position.y = kusv.position.y;
+    // kusv_string_marker_.pose.position.z = kusv.position.z + 1.0;
+
+    kusv_string_marker_.pose.position.x = 0.0;
+    kusv_string_marker_.pose.position.y = 0.0;
+    kusv_string_marker_.pose.position.z = 2.0;
 
     // Set the scale of the marker
-    target_vehicle_model_marker_.scale.x = 1.0;
-    target_vehicle_model_marker_.scale.y = 1.0;
-    target_vehicle_model_marker_.scale.z = 1.0;
+    kusv_string_marker_.scale.x = 0.2;
+    kusv_string_marker_.scale.y = 0.2;
+    kusv_string_marker_.scale.z = 0.2;
     // Color Pink
-    target_vehicle_model_marker_.color.r = 0.0;
-    target_vehicle_model_marker_.color.g = 0.3;
-    target_vehicle_model_marker_.color.b = 0.5;
-    target_vehicle_model_marker_.color.a = 1.0;
+    kusv_string_marker_.color.r = 1.0;
+    kusv_string_marker_.color.g = 1.0;
+    kusv_string_marker_.color.b = 1.0;
+    kusv_string_marker_.color.a = 1.0;
+    kusv_string_marker_.lifetime = ros::Duration(0.1);
 
-    target_vehicle_model_marker_.lifetime = ros::Duration(0.1);
+    kusv_string_marker_.text = "KUSV";
 
-    target_vehicle_string_marker_.header.frame_id = "/target";
-    target_vehicle_string_marker_.header.stamp = ros::Time::now();
-    target_vehicle_string_marker_.id = 2;
-    target_vehicle_string_marker_.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+}
 
-    // target_vehicle_string_marker_.pose.position.x = target_vehicle_.position.x;
-    // target_vehicle_string_marker_.pose.posit0ion.y = target_vehicle_.position.y;
-    // target_vehicle_string_marker_.pose.position.z = target_vehicle_.position.z + 1.0;
+void Visualizatoin::makeStarexMarker(){
+    // Update_Ego_TF();
+    starex_marker_.header.frame_id = "/starex";
+    starex_marker_.header.stamp = ros::Time::now();
+    // starex_marker_.ns = "--KKANBU--";
+    starex_marker_.id = 4;
+    // Set the marker type
+    starex_marker_.type = visualization_msgs::Marker::MESH_RESOURCE;
+    starex_marker_.mesh_resource =
+        "package://visualization/resources/SimpleCar.dae";
+    starex_marker_.mesh_use_embedded_materials = true;
+    tf::Quaternion q;
+    q.setRPY(0,0,0);
 
-    target_vehicle_string_marker_.pose.position.x = 0.0;
-    target_vehicle_string_marker_.pose.position.y = 0.0;
-    target_vehicle_string_marker_.pose.position.z = 2.0;
+    // starex_marker_.pose.position.x = starex.position.x;
+    // starex_marker_.pose.position.y = starex.position.y;
+    // starex_marker_.pose.position.z = starex.position.z;
+    // starex_marker_.pose.orientation.x = starex.orientation.x;
+    // starex_marker_.pose.orientation.y = starex.orientation.y;
+    // starex_marker_.pose.orientation.z = starex.orientation.z;
+    // starex_marker_.pose.orientation.w = starex.orientation.w;
+
+    starex_marker_.pose.position.x = 0.0;
+    starex_marker_.pose.position.y = 0.0;
+    starex_marker_.pose.position.z = 0.0;
+    starex_marker_.pose.orientation.x = q[0];
+    starex_marker_.pose.orientation.y = q[1];
+    starex_marker_.pose.orientation.z = q[2];
+    starex_marker_.pose.orientation.w = q[3];
+    
+    // Set the scale of the marker
+    starex_marker_.scale.x = 1.0;
+    starex_marker_.scale.y = 1.0;
+    starex_marker_.scale.z = 1.0;
+    // Color Pink
+    starex_marker_.color.r = 1.0;
+    starex_marker_.color.g = 1.0;
+    starex_marker_.color.b = 1.5;
+    starex_marker_.color.a = 1.0;
+
+    starex_marker_.lifetime = ros::Duration(0.1);
+
+    starex_string_marker_.header.frame_id = "/starex";
+    starex_string_marker_.header.stamp = ros::Time::now();
+    starex_string_marker_.id = 5;
+    starex_string_marker_.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+
+    // starex_string_marker_.pose.position.x = starex.position.x;
+    // starex_string_marker_.pose.position.y = starex.position.y;
+    // starex_string_marker_.pose.position.z = starex.position.z + 1.0;
+
+    starex_string_marker_.pose.position.x = 0.0;
+    starex_string_marker_.pose.position.y = 0.0;
+    starex_string_marker_.pose.position.z = 2.0;
 
     // Set the scale of the marker
-    target_vehicle_string_marker_.scale.x = 0.2;
-    target_vehicle_string_marker_.scale.y = 0.2;
-    target_vehicle_string_marker_.scale.z = 0.2;
+    starex_string_marker_.scale.x = 0.2;
+    starex_string_marker_.scale.y = 0.2;
+    starex_string_marker_.scale.z = 0.2;
     // Color Pink
-    target_vehicle_string_marker_.color.r = 1.0;
-    target_vehicle_string_marker_.color.g = 1.0;
-    target_vehicle_string_marker_.color.b = 1.0;
-    target_vehicle_string_marker_.color.a = 1.0;
-    target_vehicle_string_marker_.lifetime = ros::Duration(0.1);
+    starex_string_marker_.color.r = 1.0;
+    starex_string_marker_.color.g = 1.0;
+    starex_string_marker_.color.b = 1.0;
+    starex_string_marker_.color.a = 1.0;
+    starex_string_marker_.lifetime = ros::Duration(0.1);
 
-    target_vehicle_string_marker_.text = "Target";
+    starex_string_marker_.text = "STAREX";
 
-    // target_bounding_box_.pose = target_vehicle_;
-    tf::Quaternion q_;
-    q_.setRPY(0, 0, 0);
-    q_.normalize();
-    target_bounding_box_.header.frame_id = "/target";
-    target_bounding_box_.pose.position.x = 1.7;
-    target_bounding_box_.pose.position.y = 0.0;
-    target_bounding_box_.pose.position.z = 1.0;
-    target_bounding_box_.pose.orientation.x = q_[0];
-    target_bounding_box_.pose.orientation.y = q_[1];
-    target_bounding_box_.pose.orientation.z = q_[2];
-    target_bounding_box_.pose.orientation.w = q_[3];
-    target_bounding_box_.dimensions.x = 5.0;
-    target_bounding_box_.dimensions.y = 2.0;
-    target_bounding_box_.dimensions.z = 2.0;
+}
+
+void Visualizatoin::makeRentMarker(){
+    // Update_Ego_TF();
+    rent_marker_.header.frame_id = "/rent";
+    rent_marker_.header.stamp = ros::Time::now();
+    // rent_marker_.ns = "--KKANBU--";
+    rent_marker_.id = 6;
+    // Set the marker type
+    rent_marker_.type = visualization_msgs::Marker::MESH_RESOURCE;
+    rent_marker_.mesh_resource =
+        "package://visualization/resources/SimpleCar.dae";
+    rent_marker_.mesh_use_embedded_materials = true;
+    tf::Quaternion q;
+    q.setRPY(0,0,0);
+
+    // rent_marker_.pose.position.x = rent.position.x;
+    // rent_marker_.pose.position.y = rent.position.y;
+    // rent_marker_.pose.position.z = rent.position.z;
+    // rent_marker_.pose.orientation.x = rent.orientation.x;
+    // rent_marker_.pose.orientation.y = rent.orientation.y;
+    // rent_marker_.pose.orientation.z = rent.orientation.z;
+    // rent_marker_.pose.orientation.w = rent.orientation.w;
+
+    rent_marker_.pose.position.x = 0.0;
+    rent_marker_.pose.position.y = 0.0;
+    rent_marker_.pose.position.z = 0.0;
+    rent_marker_.pose.orientation.x = q[0];
+    rent_marker_.pose.orientation.y = q[1];
+    rent_marker_.pose.orientation.z = q[2];
+    rent_marker_.pose.orientation.w = q[3];
+    
+    // Set the scale of the marker
+    rent_marker_.scale.x = 1.0;
+    rent_marker_.scale.y = 1.0;
+    rent_marker_.scale.z = 1.0;
+    // Color Pink
+    rent_marker_.color.r = 0.0;
+    rent_marker_.color.g = 0.3373;
+    rent_marker_.color.b = 0.4;
+    rent_marker_.color.a = 1.0;
+
+    rent_marker_.lifetime = ros::Duration(0.1);
+
+    rent_string_marker_.header.frame_id = "/rent";
+    rent_string_marker_.header.stamp = ros::Time::now();
+    rent_string_marker_.id = 7;
+    rent_string_marker_.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+
+    // rent_string_marker_.pose.position.x = rent.position.x;
+    // rent_string_marker_.pose.position.y = rent.position.y;
+    // rent_string_marker_.pose.position.z = rent.position.z + 1.0;
+
+    rent_string_marker_.pose.position.x = 0.0;
+    rent_string_marker_.pose.position.y = 0.0;
+    rent_string_marker_.pose.position.z = 2.0;
+
+    // Set the scale of the marker
+    rent_string_marker_.scale.x = 0.2;
+    rent_string_marker_.scale.y = 0.2;
+    rent_string_marker_.scale.z = 0.2;
+    // Color Pink
+    rent_string_marker_.color.r = 1.0;
+    rent_string_marker_.color.g = 1.0;
+    rent_string_marker_.color.b = 1.0;
+    rent_string_marker_.color.a = 1.0;
+    rent_string_marker_.lifetime = ros::Duration(0.1);
+
+    rent_string_marker_.text = "RENT";
+
+}
+
+void Visualizatoin::makeBoundingBoxesMarker(){
+  // target_bounding_box_.pose = target_vehicle_;
+  // tf::Quaternion q_;
+  // q_.setRPY(0, 0, 0);
+  // q_.normalize();
+  // target_bounding_box_.header.frame_id = "/gv80";
+  // target_bounding_box_.pose.position.x = 0.0;
+  // target_bounding_box_.pose.position.y = 0.0;
+  // target_bounding_box_.pose.position.z = 1.0;
+  // target_bounding_box_.pose.orientation.x = q_[0];
+  // target_bounding_box_.pose.orientation.y = q_[1];
+  // target_bounding_box_.pose.orientation.z = q_[2];
+  // target_bounding_box_.pose.orientation.w = q_[3];
+  // target_bounding_box_.dimensions.x = 2.0;
+  // target_bounding_box_.dimensions.y = 4.0;
+  // target_bounding_box_.dimensions.z = 2.0;
     
 
 }
 
 void Visualizatoin::publishAllMarker(){
-    pub_vehicleModelMarker.publish(vehicle_model_marker_);
-    pub_targetVehicleModelMarker.publish(target_vehicle_model_marker_);
-    pub_vehicleStringMarker.publish(vehicle_string_marker_);
-    pub_targetVehicleStringMarker.publish(target_vehicle_string_marker_);
-    pub_targetBoundingBox.publish(target_bounding_box_);
+    pub_gv80_marker.publish(gv80_marker_);
+    pub_gv80_string_marker.publish(gv80_string_marker_);
+    
+    pub_kusv_marker.publish(kusv_marker_);
+    pub_kusv_string_marker.publish(kusv_string_marker_);
+    
+    pub_starex_marker.publish(starex_marker_);
+    pub_starex_string_marker.publish(starex_string_marker_);
+    
+    pub_rent_marker.publish(rent_marker_);
+    pub_rent_string_marker.publish(rent_string_marker_);
+    
+    // pub_targetBoundingBox.publish(bounding_boxes_);
 }
 
 int main(int argc, char **argv) {
@@ -271,8 +474,11 @@ int main(int argc, char **argv) {
   ros::Rate loop_rate(60);
   while (ros::ok()) {
     visualization.broadcasting_tf();
-    visualization.makeEgoVehicleModelMarker();
-    visualization.makeTargetVehicleModelMarker();
+    visualization.makeGv80Marker();
+    visualization.makeKusvMarker();
+    visualization.makeStarexMarker();
+    visualization.makeRentMarker();
+    // visualization.makeBoundingBoxesMarker();
     visualization.publishAllMarker();
     
     ros::spinOnce();
