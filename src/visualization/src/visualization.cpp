@@ -430,23 +430,26 @@ void Visualizatoin::makeRentMarker(){
 }
 
 void Visualizatoin::makeBoundingBoxesMarker(){
-  // target_bounding_box_.pose = target_vehicle_;
-  // tf::Quaternion q_;
-  // q_.setRPY(0, 0, 0);
-  // q_.normalize();
-  // target_bounding_box_.header.frame_id = "/gv80";
-  // target_bounding_box_.pose.position.x = 0.0;
-  // target_bounding_box_.pose.position.y = 0.0;
-  // target_bounding_box_.pose.position.z = 1.0;
-  // target_bounding_box_.pose.orientation.x = q_[0];
-  // target_bounding_box_.pose.orientation.y = q_[1];
-  // target_bounding_box_.pose.orientation.z = q_[2];
-  // target_bounding_box_.pose.orientation.w = q_[3];
-  // target_bounding_box_.dimensions.x = 2.0;
-  // target_bounding_box_.dimensions.y = 4.0;
-  // target_bounding_box_.dimensions.z = 2.0;
-    
-
+  bounding_boxes_.header.frame_id = "/gv80";
+  for(int i=0;i<track_info.track_objects.size();i++){
+    jsk_recognition_msgs::BoundingBox boundingbox;
+    tf::Quaternion q_;
+    q_.setRPY(track_info.track_objects[i].roll, track_info.track_objects[i].pitch, track_info.track_objects[i].pitch);
+    q_.normalize();
+    boundingbox.header.frame_id = "/gv80";
+    boundingbox.pose.position.x = track_info.track_objects[i].center.x;
+    boundingbox.pose.position.y = track_info.track_objects[i].center.y;
+    boundingbox.pose.position.z = track_info.track_objects[i].center.z;
+    boundingbox.pose.orientation.x = q_[0];
+    boundingbox.pose.orientation.y = q_[1];
+    boundingbox.pose.orientation.z = q_[2];
+    boundingbox.pose.orientation.w = q_[3];
+    boundingbox.dimensions.x = track_info.track_objects[i].width;
+    boundingbox.dimensions.y = track_info.track_objects[i].length;
+    boundingbox.dimensions.z = track_info.track_objects[i].height;
+    boundingbox.label = track_info.track_objects[i].header.id;
+    bounding_boxes_.boxes.push_back(boundingbox);
+  }
 }
 
 void Visualizatoin::publishAllMarker(){
@@ -462,7 +465,7 @@ void Visualizatoin::publishAllMarker(){
     pub_rent_marker.publish(rent_marker_);
     pub_rent_string_marker.publish(rent_string_marker_);
     
-    // pub_targetBoundingBox.publish(bounding_boxes_);
+    pub_boundingboxes.publish(bounding_boxes_);
 }
 
 int main(int argc, char **argv) {
@@ -478,7 +481,7 @@ int main(int argc, char **argv) {
     visualization.makeKusvMarker();
     visualization.makeStarexMarker();
     visualization.makeRentMarker();
-    // visualization.makeBoundingBoxesMarker();
+    visualization.makeBoundingBoxesMarker();
     visualization.publishAllMarker();
     
     ros::spinOnce();
